@@ -1,9 +1,5 @@
-app_port: 8000
-migrates_folder: migrations
-conf_db:
-  address: 127.0.0.1
-  port: 5449
-  user: aHAjeK
-  pass: AOifjwelmc8dw
-  db_name: sybill
-  max_connections: 10
+coingecko_api: CG-1aabcoo
+coingecko_fetch_duration: 1m
+
+currencylayer_api: 1a2b3c4d5e6f7g8h9i0j
+currencylayer_fetch_duration: 1a2b3c4d5e6f7g8h9i0j

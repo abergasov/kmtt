@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 )
 
 type CurlConf[T any] struct {
@@ -88,11 +87,8 @@ func executeWithDefaultClient[T any](req *http.Request, decoder func(io.Reader) 
 		return res, 0, fmt.Errorf("failed to read response body: %w", err)
 	}
 	var result T
-	if len(strings.TrimSpace(strings.Replace(string(b), "\"", "", -1))) > 0 {
-		if err = json.Unmarshal(b, &result); err != nil {
-			return res, resp.StatusCode, fmt.Errorf("failed to unmarshal response: %w", err)
-		}
+	if err = json.Unmarshal(b, &result); err != nil {
+		return res, resp.StatusCode, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
-
 	return &result, resp.StatusCode, nil
 }

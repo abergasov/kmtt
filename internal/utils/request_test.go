@@ -3,7 +3,7 @@ package utils_test
 import (
 	"context"
 	"fmt"
-	"go_project_template/internal/utils"
+	"kmtt/internal/utils"
 	"net/http"
 	"testing"
 	"time"

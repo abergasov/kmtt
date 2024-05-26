@@ -5,33 +5,17 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
 
 type AppConfig struct {
-	AppPort        int       `yaml:"app_port"`
-	MigratesFolder string    `yaml:"migrates_folder"`
-	ConfigDB       DBConf    `yaml:"conf_db"`
-	ConfigGraph    GraphConf `yaml:"conf_graph"`
-}
+	CoinGeckoAPI      string        `yaml:"coingecko_api"`
+	CoinGeckoDuration time.Duration `yaml:"coingecko_fetch_duration"`
 
-type GraphConf struct {
-	Address        string `yaml:"address" json:"address,omitempty"`
-	Port           string `yaml:"port" json:"port,omitempty"`
-	User           string `yaml:"user" json:"user,omitempty"`
-	Pass           string `yaml:"pass" json:"pass,omitempty"`
-	DBName         string `yaml:"db_name" json:"db_name,omitempty"`
-	MaxConnections int    `yaml:"max_connections" json:"max_connections,omitempty"`
-}
-
-type DBConf struct {
-	Address        string `yaml:"address"`
-	Port           string `yaml:"port"`
-	User           string `yaml:"user"`
-	Pass           string `yaml:"pass"`
-	DBName         string `yaml:"db_name"`
-	MaxConnections int    `yaml:"max_connections"`
+	CurrencyLayerAPI      string        `yaml:"currencylayer_api"`
+	CurrencyLayerDuration time.Duration `yaml:"currencylayer_fetch_duration"`
 }
 
 func InitConf(confFile string) (*AppConfig, error) {

@@ -1,19 +1,17 @@
 package main
 
 import (
+	"context"
 	"flag"
-	"fmt"
-	"go_project_template/internal/config"
-	"go_project_template/internal/logger"
-	samplerRepo "go_project_template/internal/repository/sampler"
-	"go_project_template/internal/routes"
-	samplerService "go_project_template/internal/service/sampler"
-	"go_project_template/internal/storage/database"
-	"log/slog"
+	"kmtt/internal/config"
+	"kmtt/internal/entities"
+	"kmtt/internal/logger"
+	"kmtt/internal/service/fetchers/coingecko"
+	"kmtt/internal/service/fetchers/currencylayer"
+	"kmtt/internal/service/pricer"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 )
 
 var (
@@ -25,56 +23,36 @@ func main() {
 	flag.Parse()
 	appLog := logger.NewAppSLogger(appHash)
 
-	appLog.Info("app starting", slog.String("conf", *confFile))
+	appLog.Info("app starting", logger.WithString("conf", *confFile))
 	appConf, err := config.InitConf(*confFile)
 	if err != nil {
-		appLog.Fatal("unable to init config", err, slog.String("config", *confFile))
+		appLog.Fatal("unable to init config", err, logger.WithString("config", *confFile))
 	}
 
-	appLog.Info("create storage connections")
-	dbConn, err := getDBConnect(appLog, &appConf.ConfigDB, appConf.MigratesFolder)
-	if err != nil {
-		appLog.Fatal("unable to connect to db", err, slog.String("host", appConf.ConfigDB.Address))
-	}
-	defer func() {
-		if err = dbConn.Close(); err != nil {
-			appLog.Fatal("unable to close db connection", err)
-		}
-	}()
-
-	appLog.Info("init repositories")
-	repo := samplerRepo.InitRepo(dbConn)
+	appLog.Info("init fetchers")
+	fetcherCoinGecko := coingecko.NewFetcher(appConf.CoinGeckoAPI, appConf.CoinGeckoDuration)
+	fetcherCurrencyLayer := currencylayer.NewFetcher(appConf.CurrencyLayerAPI, appConf.CurrencyLayerDuration)
 
 	appLog.Info("init services")
-	service := samplerService.InitService(appLog, repo)
+	service := pricer.NewService(appLog, entities.AllCoins)
+	if err = service.RegisterFetcher("CoinGecko", fetcherCoinGecko); err != nil {
+		appLog.Fatal("unable to register CoinGecko fetcher", err)
+	}
+	if err = service.RegisterFetcher("CurrencyLayer", fetcherCurrencyLayer); err != nil {
+		appLog.Fatal("unable to register CurrencyLayer fetcher", err)
+	}
 
-	appLog.Info("init http service")
-	appHTTPServer := routes.InitAppRouter(appLog, service, fmt.Sprintf(":%d", appConf.AppPort))
-	defer func() {
-		if err = appHTTPServer.Stop(); err != nil {
-			appLog.Fatal("unable to stop http service", err)
-		}
-	}()
-	go func() {
-		if err = appHTTPServer.Run(); err != nil {
-			appLog.Fatal("unable to start http service", err)
-		}
-	}()
+	fetcherCurrencyLayer.FetchPrice(context.Background())
+
+	appLog.Info("start services")
+	service.Start()
 
 	// register app shutdown
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	<-c // This blocks the main thread until an interrupt is received
-}
-
-func getDBConnect(log logger.AppLogger, cnf *config.DBConf, migratesFolder string) (*database.DBConnect, error) {
-	for i := 0; i < 5; i++ {
-		dbConnect, err := database.InitDBConnect(cnf, migratesFolder)
-		if err == nil {
-			return dbConnect, nil
-		}
-		log.Error("can't connect to db", err, slog.Int("attempt", i))
-		time.Sleep(time.Duration(i) * time.Second * 5)
+	if err = service.Stop(); err != nil {
+		appLog.Fatal("unable to stop service", err)
 	}
-	return nil, fmt.Errorf("can't connect to db")
+	appLog.Info("app stopped")
 }
