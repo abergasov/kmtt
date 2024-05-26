@@ -24,4 +24,7 @@ local run:
 cp configs/sample.app_conf.yml configs/app_conf.yml1
 # fill in the values
 make run
+
+# code quality check 
+make lint && make test
 ```
