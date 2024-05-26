@@ -7,9 +7,14 @@ enum Coin {
 }
 
 service CoinService {
-  rpc GetRate (CoinRequest) returns (CoinResponse); // fetch rate of coins between fromTms and toTms
-  rpc Convert (ConvertRequest) returns (ConvertResponse); // convert an amount from one coin to another
-  rpc BatchConvert (BatchConvertRequest) returns (BatchConvertResponse); // batch conversion of amounts from multiple coins to another
+  // GetRate - fetch rate of coins between fromTms and toTms
+  // depending of usage, it may be limited to available intervals
+  rpc GetRate (CoinRequest) returns (CoinResponse);
+  // Convert - convert an amount from one coin to another
+  rpc Convert (ConvertRequest) returns (ConvertResponse);
+  // BatchConvert - batch conversion of amounts from multiple coins to another
+  rpc BatchConvert (BatchConvertRequest) returns (BatchConvertResponse);
+  // ListRates - list rates with pagination
   rpc ListRates (ListRatesRequest) returns (ListRatesResponse); // list rates with pagination
 }
 
