@@ -19,7 +19,6 @@ func NewBaseFetcher(fetchInterval time.Duration) BaseFetcher {
 		fetchInterval: fetchInterval,
 		data:          make(map[time.Time]map[entities.Coin]*big.Float),
 	}
-
 }
 
 func (f *BaseFetcher) GetFetchInterval() time.Duration {
