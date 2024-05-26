@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"kmtt/internal/config"
 	"kmtt/internal/entities"
@@ -41,8 +40,6 @@ func main() {
 	if err = service.RegisterFetcher("CurrencyLayer", fetcherCurrencyLayer); err != nil {
 		appLog.Fatal("unable to register CurrencyLayer fetcher", err)
 	}
-
-	fetcherCurrencyLayer.FetchPrice(context.Background())
 
 	appLog.Info("start services")
 	service.Start()

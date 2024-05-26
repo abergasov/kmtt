@@ -1,0 +1,71 @@
+enum Coin {
+  BTC = 0;
+  ETH = 1;
+  LTC = 2;
+  DOT = 3;
+  ATOM = 4;
+}
+
+service CoinService {
+  rpc GetRate (CoinRequest) returns (CoinResponse); // fetch rate of coins between fromTms and toTms
+  rpc Convert (ConvertRequest) returns (ConvertResponse); // convert an amount from one coin to another
+  rpc BatchConvert (BatchConvertRequest) returns (BatchConvertResponse); // batch conversion of amounts from multiple coins to another
+  rpc ListRates (ListRatesRequest) returns (ListRatesResponse); // list rates with pagination
+}
+
+message CoinRequest {
+  repeated Coin coins = 1;
+  required uint64 fromTms = 2; // timestamp in seconds
+  required uint64 toTms = 3; // timestamp in seconds
+}
+
+message CoinResponse {
+  repeated ServiceRatesList ratesMap = 1;
+}
+
+message ServiceRatesList {
+  required string serviceName = 1;
+  repeated ServiceRates serviceRates = 2;
+}
+
+message ServiceRates {
+  required uint64 rateTimeTms = 1; // timestamp in seconds
+  map<string, string> rates = 2; // string for coins and values - big.Float as strings.
+}
+
+message ConvertRequest {
+  required Coin fromCoin = 1;
+  required Coin toCoin = 2;
+  required string amount = 3; // big.Float as string
+}
+
+message ConvertResponse {
+  required string convertedAmount = 1; // big.Float as string
+}
+
+message BatchConvertRequest {
+  required Coin toCoin = 1;
+  repeated AmountToConvert amounts = 2;
+}
+
+message AmountToConvert {
+  required Coin fromCoin = 1;
+  required string amount = 2; // big.Float as string
+}
+
+message BatchConvertResponse {
+  map<string, string> convertedAmounts = 1; // fromCoin as string, converted amount as string
+}
+
+message ListRatesRequest {
+  required uint64 fromTms = 1; // timestamp in seconds
+  required uint64 toTms = 2; // timestamp in seconds
+  required int32 pageSize = 3;
+  required int32 pageNumber = 4;
+}
+
+message ListRatesResponse {
+  repeated ServiceRatesList ratesMap = 1;
+  required int32 totalItems = 2;
+  required int32 totalPages = 3;
+}
