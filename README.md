@@ -95,17 +95,22 @@ type TokenKeeper struct {
    cdc             codec.BinaryCodec
 }
 
+func (k *TokenKeeper) GetFrozenAmount(ctx sdk.Context, addr sdk.AccAddress) (sdk.Coin, error) {
+    // get frozen amount from the store
+	return sdk.Coin{}, nil
+}
+
+func (k *TokenKeeper) GetAllowedAmount(ctx sdk.Context, addr sdk.AccAddress) (sdk.Coin, error) {
+   // get allowed amount from the store
+   return sdk.Coin{}, nil
+}
+
 func (k *TokenKeeper) Freeze(ctx sdk.Context, addr sdk.AccAddress, amount sdk.Coin) error {
-	// get balance of the account by allowed key
-	// verify that the account has enough balance
-	// store the frozen amount in the store
 	// increment amount by frozen amount, decrement amount by allowed amount
 	return nil
 }
 
 func (k *TokenKeeper) UnFreeze(ctx sdk.Context, addr sdk.AccAddress, amount sdk.Coin) error {
-	// get frozen balance of the account
-	// verify that the account has enough balance for unfreeze
 	// increment amount by allowed amount, decrement amount by frozen amount
 	return nil
 }
@@ -122,14 +127,22 @@ type MsgManageTokens struct {
 handlers to process message
 ```go
 func HandleMsgFreezeTokens(ctx sdk.Context, keeper TokenKeeper, msg MsgManageTokens) sdk.Result {
-    if err := keeper.FreezeTokens(ctx, msg.Address, msg.Amount); err != nil {
+    allowedAmount, err := keeper.GetAllowedAmount(ctx, msg.Address)
+	if allowedAmount.LessThan(msg.Amount) {
+        return sdk.ErrInsufficientFunds("insufficient funds").Result()
+    }
+	if err := keeper.FreezeTokens(ctx, msg.Address, msg.Amount); err != nil {
         return sdk.ErrUnknownRequest(err.Error()).Result()
     }
     return sdk.Result{Events: ctx.EventManager().Events()}
 }
 
 func HandleMsgUnfreezeTokens(ctx sdk.Context, keeper TokenKeeper, msg MsgManageTokens) sdk.Result {
-    if err := keeper.UnfreezeTokens(ctx, msg.Address, msg.Amount); err != nil {
+    frozenAmount, err := keeper.GetFrozenAmount(ctx, msg.Address)
+    if frozenAmount.LessThan(msg.Amount) {
+        return sdk.ErrInsufficientFunds("insufficient funds").Result()
+    }
+	if err := keeper.UnfreezeTokens(ctx, msg.Address, msg.Amount); err != nil {
         return sdk.ErrUnknownRequest(err.Error()).Result()
     }
     return sdk.Result{Events: ctx.EventManager().Events()}
